@@ -1,5 +1,5 @@
 <template>
-  <div style="min-height:100vh;padding:40px 24px;background:#fff;">
+  <div style="min-height:100vh;padding:20px 20px;background:#fff;">
     <h2 style="font-size:24px;margin-bottom:32px;text-align:center;">{{ isLogin ? '登录' : '注册' }}</h2>
     <div style="margin-bottom:20px;">
       <label style="font-size:14px;color:#666;display:block;margin-bottom:6px;">手机号</label>
