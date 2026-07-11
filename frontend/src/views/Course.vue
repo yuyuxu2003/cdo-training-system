@@ -23,9 +23,11 @@
       </div>
     </div>
     <div v-if="currentVideo" style="position:fixed;top:0;left:0;right:0;bottom:0;background:#000;z-index:1000;display:flex;flex-direction:column;justify-content:center;align-items:center;">
-      <video :src="currentVideo.url" controls style="width:100%;max-height:70vh;"></video>
-      <div style="color:#fff;margin-top:16px;font-size:14px;">{{ currentVideo.title }}</div>
-      <button @click="currentVideo=null" style="margin-top:20px;background:#fff;color:#333;border:none;padding:10px 30px;border-radius:20px;cursor:pointer;">关闭</button>
+      <div style="max-width:480px;width:100%;margin:0 auto;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:0 16px;">
+        <video :src="currentVideo.url" controls style="width:100%;max-height:70vh;"></video>
+        <div style="color:#fff;margin-top:16px;font-size:14px;">{{ currentVideo.title }}</div>
+        <button @click="currentVideo=null" style="margin-top:20px;background:#fff;color:#333;border:none;padding:10px 30px;border-radius:20px;cursor:pointer;">关闭</button>
+      </div>
     </div>
   </div>
 </template>
