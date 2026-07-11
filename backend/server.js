@@ -71,6 +71,36 @@ app.post('/api/login', async (req, res) => {
 })
 
 app.post('/api/enroll', auth, async (req, res) => {
+  try {
+    const { name, phone, email, id_card, company, position, industry, work_years, use_rebate } = req.body
+    const userId = req.user.userId
+    await pool.query(`INSERT INTO student_infos (user_id, real_name, email, id_card, company, position, industry, work_years)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8) ON CONFLICT (user_id) DO UPDATE SET
+      real_name = EXCLUDED.real_name, email = EXCLUDED.email, id_card = EXCLUDED.id_card,
+      company = EXCLUDED.company, position = EXCLUDED.position, industry = EXCLUDED.industry, work_years = EXCLUDED.work_years`,
+      [userId, name, email, id_card, company, position, industry, work_years])
+    let price = 680000  // 6800元 = 680000分
+    const accountRes = await pool.query('SELECT available_rebate FROM student_accounts WHERE user_id = $1', [userId])
+    const account = accountRes.rows[0]
+    let rebateUsed = 0
+    if (use_rebate && account && account.available_rebate > 0) {
+      rebateUsed = Math.min(account.available_rebate, price)
+      price = price - rebateUsed
+    }
+    const orderNo = generateOrderNo()
+    await pool.query('INSERT INTO orders (order_no, user_id, pay_amount, rebate_used, status, course_name) VALUES ($1, $2, $3, $4, $5, $6)',
+      [orderNo, userId, price, rebateUsed, 'pending', 'CDO首席数据官培训'])
+    if (rebateUsed > 0) {
+      await pool.query('UPDATE student_accounts SET available_rebate = available_rebate - $1, total_rebate_used = total_rebate_used + $1 WHERE user_id = $2', [rebateUsed, userId])
+      await pool.query('INSERT INTO rebate_records (user_id, type, amount, balance_after) VALUES ($1, $2, $3, $4)',
+        [userId, 'use', -rebateUsed, account.available_rebate - rebateUsed])
+    }
+    res.json({ ok: true, order_no: orderNo, pay_amount: price })
+  } catch (e) {
+    console.error('enroll error:', e)
+    res.status(500).json({ ok: false, msg: '报名失败: ' + e.message })
+  }
+})
   const { name, phone, email, id_card, company, position, industry, work_years, use_rebate } = req.body
   const userId = req.user.userId
   await pool.query(`INSERT INTO student_infos (user_id, real_name, email, id_card, company, position, industry, work_years)
@@ -145,6 +175,90 @@ app.get('/api/video/:id', auth, async (req, res) => {
 app.get('/api/health', (req, res) => res.json({ ok: true, time: new Date().toISOString() }))
 
 app.get('/api/admin/stats', async (req, res) => {
+  try {
+    const users = await pool.query('SELECT COUNT(*) as count FROM users')
+    const orders = await pool.query('SELECT COUNT(*) as count, COALESCE(SUM(pay_amount), 0) as total FROM orders WHERE status = $1', ['paid'])
+    const pending = await pool.query('SELECT COUNT(*) as count FROM orders WHERE status = $1', ['pending'])
+    res.json({
+      users: parseInt(users.rows[0].count),
+      paidOrders: parseInt(orders.rows[0].count),
+      pendingOrders: parseInt(pending.rows[0].count),
+      totalRevenue: parseInt(orders.rows[0].total)
+    })
+  } catch (e) {
+    res.status(500).json({ ok: false, msg: e.message })
+  }
+})
+
+// 学员列表（带报名信息）
+app.get('/api/admin/users', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT u.id, u.phone, u.promotion_code, u.invited_by, u.created_at,
+             s.real_name, s.email, s.company, s.position, s.industry, s.work_years,
+             o.order_no, o.pay_amount, o.status as order_status, o.created_at as order_time
+      FROM users u
+      LEFT JOIN student_infos s ON u.id = s.user_id
+      LEFT JOIN orders o ON u.id = o.user_id
+      ORDER BY u.created_at DESC
+      LIMIT 200
+    `)
+    res.json(result.rows)
+  } catch (e) {
+    res.status(500).json({ ok: false, msg: e.message })
+  }
+})
+
+// 订单列表
+app.get('/api/admin/orders', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT o.*, u.phone, s.real_name
+      FROM orders o
+      JOIN users u ON o.user_id = u.id
+      LEFT JOIN student_infos s ON o.user_id = s.user_id
+      ORDER BY o.created_at DESC
+      LIMIT 200
+    `)
+    res.json(result.rows)
+  } catch (e) {
+    res.status(500).json({ ok: false, msg: e.message })
+  }
+})
+
+// 手动标记订单为已支付（客服线下收款后使用）
+app.post('/api/admin/mark-paid', async (req, res) => {
+  try {
+    const { order_no } = req.body
+    const orderRes = await pool.query('SELECT * FROM orders WHERE order_no = $1', [order_no])
+    const order = orderRes.rows[0]
+    if (!order) return res.json({ ok: false, msg: '订单不存在' })
+    if (order.status === 'paid') return res.json({ ok: false, msg: '订单已支付' })
+
+    await pool.query('UPDATE orders SET status = $1, pay_time = NOW() WHERE id = $2', ['paid', order.id])
+
+    // 给推广人返学费
+    const userRes = await pool.query('SELECT invited_by FROM users WHERE id = $1', [order.user_id])
+    const inviterId = userRes.rows[0]?.invited_by
+    if (inviterId) {
+      const rebate = Math.floor(order.pay_amount * 0.20)
+      if (rebate > 0) {
+        const promoRes = await pool.query('SELECT * FROM student_accounts WHERE user_id = $1', [inviterId])
+        const promoter = promoRes.rows[0]
+        if (promoter) {
+          const newBalance = promoter.available_rebate + rebate
+          await pool.query('UPDATE student_accounts SET available_rebate = $1, total_rebate_earned = $2, total_invited = $3, total_invited_amount = $4 WHERE user_id = $5',
+            [newBalance, promoter.total_rebate_earned + rebate, promoter.total_invited + 1, promoter.total_invited_amount + order.pay_amount, inviterId])
+          await pool.query('INSERT INTO rebate_records (user_id, type, amount, source_order_id, balance_after) VALUES ($1, $2, $3, $4, $5)',
+            [inviterId, 'earn', rebate, order.id, newBalance])
+        }
+      }
+    }
+    res.json({ ok: true })
+  } catch (e) {
+    res.status(500).json({ ok: false, msg: e.message })
+  }
+})
   const users = await pool.query('SELECT COUNT(*) as count FROM users')
   const orders = await pool.query('SELECT COUNT(*) as count, COALESCE(SUM(pay_amount), 0) as total FROM orders WHERE status = $1', ['paid'])
   res.json({ users: parseInt(users.rows[0].count), paidOrders: parseInt(orders.rows[0].count), totalRevenue: parseInt(orders.rows[0].total) })
