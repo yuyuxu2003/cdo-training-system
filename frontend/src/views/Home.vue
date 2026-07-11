@@ -1,21 +1,12 @@
 <template>
   <div style="min-height:100vh;background:#f5f5f5;">
     <!-- Banner 区域 -->
-    <div style="background:linear-gradient(135deg,#1a73e8,#0d47a1);padding:32px 20px 40px;color:#fff;text-align:center;position:relative;overflow:hidden;">
-      <div style="position:absolute;top:0;left:0;right:0;bottom:0;opacity:0.1;">
-        <div style="position:absolute;top:10%;left:5%;width:80px;height:80px;border:2px solid #fff;border-radius:50%;"></div>
-        <div style="position:absolute;top:40%;right:10%;width:40px;height:40px;border:2px solid #fff;border-radius:50%;"></div>
-        <div style="position:absolute;bottom:20%;left:20%;width:60px;height:60px;border:2px solid #fff;border-radius:50%;"></div>
-      </div>
-      <div style="position:relative;z-index:1;">
-        <div style="font-size:12px;background:rgba(255,255,255,0.2);display:inline-block;padding:4px 12px;border-radius:12px;margin-bottom:12px;">🔥 北京正式启动</div>
-        <h1 style="font-size:24px;margin-bottom:8px;font-weight:700;">首席数据官 CDO 培训认证</h1>
-        <p style="font-size:13px;opacity:0.9;margin-bottom:8px;">数据驱动决策 · 企业数字化转型核心人才</p>
-        <p style="font-size:12px;opacity:0.8;">工信部人才交流中心官方认证 · 精品小班 · 限额30人</p>
-        <div style="margin-top:20px;display:flex;justify-content:center;gap:12px;">
-          <button @click="goLogin" style="background:#fff;color:#1a73e8;border:none;padding:12px 32px;border-radius:24px;font-size:15px;font-weight:bold;cursor:pointer;">立即报名</button>
-          <button @click="scrollToDetail" style="background:transparent;color:#fff;border:1px solid #fff;padding:12px 24px;border-radius:24px;font-size:14px;cursor:pointer;">了解详情</button>
-        </div>
+    <div style="position:relative;overflow:hidden;">
+      <img src="/banner.jpg" style="width:100%;height:200px;object-fit:cover;display:block;" alt="CDO培训">
+      <div style="position:absolute;bottom:0;left:0;right:0;padding:20px;background:linear-gradient(transparent,rgba(0,0,0,0.7));color:#fff;">
+        <div style="font-size:12px;background:rgba(255,255,255,0.2);display:inline-block;padding:4px 12px;border-radius:12px;margin-bottom:8px;">🔥 北京正式启动</div>
+        <h1 style="font-size:20px;margin-bottom:4px;font-weight:700;">首席数据官 CDO 培训认证</h1>
+        <p style="font-size:12px;opacity:0.9;">工信部人才交流中心官方认证 · 精品小班 · 限额30人</p>
       </div>
     </div>
 
@@ -36,6 +27,7 @@
     <!-- 四大核心优势 -->
     <div style="padding:20px;background:#fff;margin:12px;border-radius:12px;">
       <h3 style="font-size:16px;margin-bottom:16px;font-weight:700;">🎯 四大核心优势</h3>
+      <img src="/course-data.jpg" style="width:100%;border-radius:10px;margin-bottom:16px;" alt="数据治理">
       <div v-for="(adv, i) in advantages" :key="i" style="display:flex;align-items:flex-start;margin-bottom:16px;padding:12px;background:#f8f9fa;border-radius:10px;">
         <div style="font-size:24px;margin-right:12px;flex-shrink:0;">{{ adv.icon }}</div>
         <div>
@@ -96,6 +88,7 @@
 
     <!-- 组织单位 -->
     <div style="padding:20px;background:#fff;margin:12px;border-radius:12px;text-align:center;">
+      <img src="/certificate.jpg" style="width:120px;height:120px;border-radius:50%;margin-bottom:12px;" alt="认证证书">
       <h3 style="font-size:14px;margin-bottom:8px;color:#999;">主办单位</h3>
       <div style="font-size:16px;font-weight:700;color:#1a73e8;">北京乙丁数链科技有限公司</div>
       <div style="font-size:12px;color:#999;margin-top:8px;">培训地点：北京 · 精品小班 · 限额30人/期</div>
