@@ -32,26 +32,27 @@ const code = ref('')
 const isLogin = ref(true)
 const countdown = ref(0)
 const sendCode = async () => {
-  if (!/^1\\d{10}$/.test(phone.value)) { alert('请输入正确手机号'); return }
+  if (!/^1\d{10}$/.test(phone.value)) { alert('请输入正确手机号'); return }
   try {
-    await axios.post('/api/send-sms', { phone: phone.value })
-    alert('验证码已发送（测试环境固定为 1234）')
+    const res = await axios.post('/api/send-sms', { phone: phone.value })
+    alert(res.data.msg || '验证码已发送')
     countdown.value = 60
     const timer = setInterval(() => { countdown.value--; if (countdown.value <= 0) clearInterval(timer) }, 1000)
-  } catch (e) { alert('发送失败') }
+  } catch (e) { console.error(e); alert('发送失败: ' + (e.response?.data?.msg || e.message)) }
 }
 const submit = async () => {
-  if (!/^1\\d{10}$/.test(phone.value)) { alert('请输入正确手机号'); return }
-  if (!/^\\d{4}$/.test(code.value)) { alert('请输入4位验证码'); return }
+  if (!/^1\d{10}$/.test(phone.value)) { alert('请输入正确手机号'); return }
+  if (!/^\d{4}$/.test(code.value)) { alert('请输入4位验证码'); return }
   const inviterId = localStorage.getItem('inviterId')
   try {
     const res = await axios.post('/api/login', { phone: phone.value, code: code.value, inviter_id: inviterId })
+    console.log('login response:', res.data)
     if (res.data.ok) {
       localStorage.setItem('token', res.data.token)
       localStorage.setItem('user', JSON.stringify(res.data.user))
       alert('登录成功！')
       router.push('/enroll')
     } else { alert(res.data.msg || '登录失败') }
-  } catch (e) { alert('登录失败') }
+  } catch (e) { console.error('login error:', e); alert('登录失败: ' + (e.response?.data?.msg || e.message)) }
 }
 </script>
