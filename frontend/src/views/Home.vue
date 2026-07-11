@@ -27,11 +27,13 @@
         </div>
       </div>
     </div>
-    <div style="position:fixed;bottom:0;left:0;right:0;height:60px;background:#fff;display:flex;align-items:center;justify-content:space-around;border-top:1px solid #eee;">
-      <span style="color:#1a73e8;font-weight:bold;" @click="$router.push('/')">首页</span>
-      <span style="color:#666;" @click="goCourse">学习</span>
-      <span style="color:#666;" @click="goPromote">推广</span>
-      <span style="color:#666;" @click="goProfile">我的</span>
+    <div style="position:fixed;bottom:0;left:0;right:0;height:60px;display:flex;align-items:center;justify-content:space-around;border-top:1px solid #eee;z-index:100;">
+      <div style="max-width:480px;width:100%;margin:0 auto;height:100%;display:flex;align-items:center;justify-content:space-around;background:#fff;">
+        <span style="color:#1a73e8;font-weight:bold;" @click="$router.push('/')">首页</span>
+        <span style="color:#666;" @click="goCourse">学习</span>
+        <span style="color:#666;" @click="goPromote">推广</span>
+        <span style="color:#666;" @click="goProfile">我的</span>
+      </div>
     </div>
     <div style="height:60px;"></div>
   </div>
