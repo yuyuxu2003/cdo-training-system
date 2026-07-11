@@ -1,5 +1,5 @@
 <template>
-  <div style="min-height:100vh;padding:20px;padding-bottom:100px;background:#f5f5f5;">
+  <div style="min-height:100vh;padding:20px;padding-bottom:140px;background:#f5f5f5;">
     <div style="display:flex;align-items:center;margin-bottom:16px;">
       <span style="font-size:20px;margin-right:8px;cursor:pointer;" @click="$router.back()">←</span>
       <h2 style="font-size:18px;">填写报名信息</h2>
@@ -63,15 +63,21 @@
       </div>
     </div>
 
-    <!-- 底部支付栏 -->
+    <!-- 底部操作栏 -->
     <div style="position:fixed;bottom:0;left:0;right:0;border-top:1px solid #eee;z-index:100;">
-      <div style="max-width:480px;margin:0 auto;background:#fff;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;">
-        <div>
-          <div style="font-size:12px;color:#666;">实付金额</div>
-          <div style="font-size:24px;color:#e53935;font-weight:bold;">¥{{ (finalAmount/100).toFixed(2) }}</div>
-          <div v-if="useRebate && account.available_rebate > 0" style="font-size:11px;color:#999;">已抵扣 ¥{{ (Math.min(account.available_rebate,199900)/100).toFixed(2) }}</div>
+      <div style="max-width:480px;margin:0 auto;background:#fff;padding:16px 20px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <div>
+            <div style="font-size:12px;color:#666;">实付金额</div>
+            <div style="font-size:24px;color:#e53935;font-weight:bold;">¥{{ (finalAmount/100).toFixed(2) }}</div>
+            <div v-if="useRebate && account.available_rebate > 0" style="font-size:11px;color:#999;">已抵扣 ¥{{ (Math.min(account.available_rebate,680000)/100).toFixed(2) }}</div>
+          </div>
         </div>
-        <button @click="submit" style="background:#1a73e8;color:#fff;border:none;padding:12px 36px;border-radius:24px;font-size:16px;font-weight:700;cursor:pointer;">立即支付</button>
+        <div style="display:flex;gap:8px;">
+          <button @click="submit" style="flex:1;background:#1a73e8;color:#fff;border:none;padding:12px;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;">提交报名</button>
+          <a href="tel:13716560515" style="flex:1;background:#4caf50;color:#fff;border:none;padding:12px;border-radius:8px;font-size:15px;font-weight:700;text-decoration:none;text-align:center;display:block;">📞 联系客服</a>
+        </div>
+        <div style="font-size:11px;color:#999;text-align:center;margin-top:8px;">提交后请致电 13716560515（龙老师）完成缴费</div>
       </div>
     </div>
   </div>
@@ -79,9 +85,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import axios from 'axios'
-const router = useRouter()
 
 const form = ref({ name: '', phone: '', email: '', id_card: '', company: '', position: '', industry: '', work_years: '' })
 const useRebate = ref(false)
@@ -99,7 +103,7 @@ const fields = [
 ]
 
 const finalAmount = computed(() => {
-  let price = 680000  // 6800元 = 680000分
+  let price = 680000
   if (useRebate.value && account.value.available_rebate > 0) {
     price = Math.max(0, price - account.value.available_rebate)
   }
@@ -123,8 +127,7 @@ const submit = async () => {
     const res = await axios.post('/api/enroll', { ...form.value, use_rebate: useRebate.value },
       { headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } })
     if (res.data.ok) {
-      alert('报名成功！请支付订单。')
-      router.push('/course')
+      alert('报名成功！请致电 13716560515（龙老师）完成缴费，缴费后客服会为您开通课程权限。')
     } else { alert(res.data.msg) }
   } catch (e) { alert('提交失败') }
 }
