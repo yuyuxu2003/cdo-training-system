@@ -33,31 +33,41 @@ const generateOrderNo = () => 'CDO' + Date.now().toString().slice(2) + Math.rand
 const generateCode = () => Math.random().toString(36).substr(2, 6).toUpperCase()
 
 app.post('/api/send-sms', async (req, res) => {
-  const { phone } = req.body
-  if (!/^1\d{10}$/.test(phone)) return res.json({ ok: false, msg: '手机号格式错误' })
-  const code = '1234'
-  await pool.query('INSERT INTO sms_codes (phone, code, expires) VALUES ($1, $2, $3)', [phone, code, Date.now() + 300000])
-  res.json({ ok: true, msg: '验证码已发送' })
+  try {
+    const { phone } = req.body
+    if (!/^1\d{10}$/.test(phone)) return res.json({ ok: false, msg: '手机号格式错误' })
+    const code = '1234'
+    await pool.query('INSERT INTO sms_codes (phone, code, expires) VALUES ($1, $2, $3)', [phone, code, Date.now() + 300000])
+    res.json({ ok: true, msg: '验证码已发送' })
+  } catch (e) {
+    console.error('send-sms error:', e)
+    res.status(500).json({ ok: false, msg: '服务器错误: ' + e.message })
+  }
 })
 
 app.post('/api/login', async (req, res) => {
-  const { phone, code } = req.body
-  if (!/^1\d{10}$/.test(phone)) return res.json({ ok: false, msg: '手机号格式错误' })
-  if (!/^\d{4}$/.test(code)) return res.json({ ok: false, msg: '验证码应为4位' })
-  const smsRows = await pool.query('SELECT * FROM sms_codes WHERE phone = $1 AND code = $2 AND expires > $3', [phone, code, Date.now()])
-  if (smsRows.rows.length === 0 && code !== '1234') return res.json({ ok: false, msg: '验证码错误或已过期' })
-  let user = (await pool.query('SELECT * FROM users WHERE phone = $1', [phone])).rows[0]
-  if (!user) {
-    const promoCode = generateCode()
-    const result = await pool.query('INSERT INTO users (phone, promotion_code) VALUES ($1, $2) RETURNING id', [phone, promoCode])
-    const userId = result.rows[0].id
-    await pool.query('INSERT INTO student_accounts (user_id, promotion_code) VALUES ($1, $2)', [userId, promoCode])
-    user = { id: userId, phone, promotion_code: promoCode }
-    const inviterId = req.body.inviter_id
-    if (inviterId) await pool.query('UPDATE users SET invited_by = $1 WHERE id = $2', [inviterId, userId])
+  try {
+    const { phone, code } = req.body
+    if (!/^1\d{10}$/.test(phone)) return res.json({ ok: false, msg: '手机号格式错误' })
+    if (!/^\d{4}$/.test(code)) return res.json({ ok: false, msg: '验证码应为4位' })
+    const smsRows = await pool.query('SELECT * FROM sms_codes WHERE phone = $1 AND code = $2 AND expires > $3', [phone, code, Date.now()])
+    if (smsRows.rows.length === 0 && code !== '1234') return res.json({ ok: false, msg: '验证码错误或已过期' })
+    let user = (await pool.query('SELECT * FROM users WHERE phone = $1', [phone])).rows[0]
+    if (!user) {
+      const promoCode = generateCode()
+      const result = await pool.query('INSERT INTO users (phone, promotion_code) VALUES ($1, $2) RETURNING id', [phone, promoCode])
+      const userId = result.rows[0].id
+      await pool.query('INSERT INTO student_accounts (user_id, promotion_code) VALUES ($1, $2)', [userId, promoCode])
+      user = { id: userId, phone, promotion_code: promoCode }
+      const inviterId = req.body.inviter_id
+      if (inviterId) await pool.query('UPDATE users SET invited_by = $1 WHERE id = $2', [inviterId, userId])
+    }
+    const token = jwt.sign({ userId: user.id, phone: user.phone }, process.env.JWT_SECRET || 'default-secret', { expiresIn: '7d' })
+    res.json({ ok: true, token, user: { id: user.id, phone: user.phone, nickname: user.nickname } })
+  } catch (e) {
+    console.error('login error:', e)
+    res.status(500).json({ ok: false, msg: '服务器错误: ' + e.message })
   }
-  const token = jwt.sign({ userId: user.id, phone: user.phone }, process.env.JWT_SECRET || 'default-secret', { expiresIn: '7d' })
-  res.json({ ok: true, token, user: { id: user.id, phone: user.phone, nickname: user.nickname } })
 })
 
 app.post('/api/enroll', auth, async (req, res) => {
