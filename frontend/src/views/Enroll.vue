@@ -33,12 +33,14 @@
         <label style="font-size:14px;"><input type="checkbox" v-model="useRebate" style="margin-right:6px;">使用抵扣金</label>
       </div>
     </div>
-    <div style="position:fixed;bottom:0;left:0;right:0;background:#fff;padding:16px 20px;border-top:1px solid #eee;display:flex;justify-content:space-between;align-items:center;">
-      <div>
-        <div style="font-size:12px;color:#666;">实付金额</div>
-        <div style="font-size:24px;color:#e53935;font-weight:bold;">¥{{ (finalAmount/100).toFixed(2) }}</div>
+    <div style="position:fixed;bottom:0;left:0;right:0;border-top:1px solid #eee;z-index:100;">
+      <div style="max-width:480px;margin:0 auto;background:#fff;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="font-size:12px;color:#666;">实付金额</div>
+          <div style="font-size:24px;color:#e53935;font-weight:bold;">¥{{ (finalAmount/100).toFixed(2) }}</div>
+        </div>
+        <button @click="submit" style="background:#1a73e8;color:#fff;border:none;padding:12px 36px;border-radius:24px;font-size:16px;font-weight:bold;cursor:pointer;">立即支付</button>
       </div>
-      <button @click="submit" style="background:#1a73e8;color:#fff;border:none;padding:12px 36px;border-radius:24px;font-size:16px;font-weight:bold;cursor:pointer;">立即支付</button>
     </div>
   </div>
 </template>
