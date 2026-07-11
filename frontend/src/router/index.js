@@ -6,6 +6,14 @@ const routes = [
   { path: '/enroll', component: () => import('@/views/Enroll.vue') },
   { path: '/course', component: () => import('@/views/Course.vue') },
   { path: '/promote', component: () => import('@/views/Promote.vue') },
+  { path: '/profile', component: () => import('@/views/Profile.vue') },
+  { path: '/admin', component: () => import('@/views/Admin.vue') }
+]
+  { path: '/', component: () => import('@/views/Home.vue') },
+  { path: '/login', component: () => import('@/views/Login.vue') },
+  { path: '/enroll', component: () => import('@/views/Enroll.vue') },
+  { path: '/course', component: () => import('@/views/Course.vue') },
+  { path: '/promote', component: () => import('@/views/Promote.vue') },
   { path: '/profile', component: () => import('@/views/Profile.vue') }
 ]
 
